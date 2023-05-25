@@ -188,11 +188,11 @@ hogares <- hogares %>%
          Tipo_NBI = parse_factor(Tipo_NBI)
   ) 
 # summary(hogares)
-# 
-# #Creo la variable cuantos NBI tiene el hogar.
-# hogares <- hogares %>%
-#   mutate(Cantidad_de_NBI = NBI1 + NBI2 + NBI3 +NBI4)
-# 
+
+#Creo la variable cuantos NBI tiene el hogar.
+hogares <- hogares %>%
+  mutate(Cantidad_de_NBI = NBI1 + NBI2 + NBI3 + NBI4 + NBI5)
+
 # count(hogares, Cantidad_de_NBI)
 # 
 # #Tabla de contingencia de los NBI.
@@ -222,7 +222,8 @@ ggplot(hogares, aes(x = ITF)) +
 
 #Elimino los ITF que son 0
 hogares <- hogares %>% 
-  mutate(ITF = ifelse(ITF == 0, NA, ITF))
+  mutate(ITF = ifelse(ITF == 0, NA, ITF)) %>%
+  filter(!is.na(ITF))
   
 # Especifico la ruta del archivo pdf
 excel_adulto_equivalente <- "RawData/Pobreza_Data.csv"
@@ -230,7 +231,9 @@ excel_CBA <- "RawData/Series_CBA.csv"
 excel_ICE <- "RawData/Series_ICE.csv"
 excel_CBT <- "RawData/Series_CBT.csv"
 
-adultos_equivalentes <- read_csv2(excel_adulto_equivalente)
+adultos_equivalentes <- read_csv2(excel_adulto_equivalente)  %>% 
+  pivot_longer(cols = c("Mujeres", "Varones"), names_to = "Sexo") %>% 
+  mutate(Sexo = ifelse(Sexo == "Varones", 1, 2))
 
 CBA <- read_csv2(excel_CBA) %>% 
   select(Promedio, COD_REGION)
@@ -243,21 +246,14 @@ CBT <- read_csv2(excel_CBT) %>%
 
 #Me aseguro que no hay otros valores que 1 o 2 en la variable CH04
 #Reemplazo los años cumplidos = -1, a 0.
-individuos <- individuos %T>% 
-  distinct(CH04) %>% 
+individuos <- individuos %>% 
   mutate(CH06 = ifelse(CH06 == -1, 0, CH06))
-
-#Funcion que recibe edad, sexo y df con equivalencias de adulto. 
-obtener_equivalencia_adulto <- function(edad, sexo, df_equiv){
-  df_equiv %>% 
-    filter(Desde <= edad & edad < Hasta) %>% 
-    pull(ifelse(sexo == 1, Varones, Mujeres))
-}
 
 #Calculo la cantidad de adultos equivalentes para cada hogar
 individuos <- individuos %>%
-  mutate(Equivalencia_Adulto = map2_dbl(CH06, CH04, ~ obtener_equivalencia_adulto(.x, .y, adultos_equivalentes)))
-
+  left_join(adultos_equivalentes, join_by(between(CH06, Desde, Hasta, bounds = "[)"), CH04 == Sexo)) %>% 
+  rename(Equivalencia_Adulto = value)
+  
 hogares <- individuos %>%
   group_by(NRO_HOGAR, CODUSU) %>%
   summarise(Equivalencia_Adultos = sum(Equivalencia_Adulto)) %>%
@@ -274,22 +270,23 @@ hogares <- hogares %>%
 hogares <- hogares %>%   
   mutate(LI = CBA * Equivalencia_Adultos,
          LP = CBT * Equivalencia_Adultos
-         ) %>%
+  ) %>%
   mutate(Pobre     = ifelse(ITF < LP, TRUE, FALSE),
          Indigente = ifelse(ITF < LI, TRUE, FALSE)
-         ) %>%
+  ) %>%
   mutate(
-      Tipo_Pobreza = ifelse(Indigente, "Indigente", ifelse(Pobre, "Pobre", "No Pobre")),
-      Tipo_Pobreza = parse_factor(Tipo_Pobreza)
-    )
+    Tipo_Pobreza = ifelse(Indigente, "Indigente", ifelse(Pobre, "Pobre", "No Pobre")),
+    Tipo_Pobreza = parse_factor(Tipo_Pobreza)
+  )
 
 #Pondero a los hogares por ingreso
 hogares %>%
   ungroup() %>% 
-  count(Tipo_Pobreza, wt = PONDIH)
-
+  count(Tipo_Pobreza, wt = PONDIH) %>% 
+  mutate(freq_relativa = (n/sum(n))*100)
+  
 #Genero tabla de contingecia sobre el tipo de pobreza y el tipo de NBI
-table(hogares$Pobreza, hogares$Tipo_NBI)
+table(hogares$Tipo_Pobreza, hogares$Tipo_NBI)
 
    
   
