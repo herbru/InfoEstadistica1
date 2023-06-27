@@ -85,7 +85,7 @@ hogares <- hogares %>%
   select(-(pers_x_habitacion)) #Elimino la variable temporal.
 
 
-hogares %>% count(NBI1, wt = PONDIH) %>% 
+hogares %>% count(NBI1, wt = PONDERA) %>% 
   mutate(Freq_Relativa = n/sum(n) * 100) %>% 
   round(2)
 
@@ -107,7 +107,7 @@ hogares <- hogares %>%
     NBI2 = ifelse(IV3 == 3 | IV6 != 1, TRUE, FALSE)
   ) 
 
-hogares %>% count(NBI2, wt = PONDIH) %>% 
+hogares %>% count(NBI2, wt = PONDERA) %>% 
   mutate(Freq_Relativa = n/sum(n) * 100) %>% 
   round(2) #25 NA
 
@@ -121,7 +121,7 @@ hogares <- hogares %>%
   mutate(IV10 = ifelse(IV10 == 0, NA, IV10)) %>% 
   mutate(NBI3 = ifelse (IV8 ==2 | IV10 == 3, TRUE, FALSE)) 
 
-hogares %>% count(NBI3, wt = PONDIH) %>% 
+hogares %>% count(NBI3, wt = PONDERA) %>% 
   mutate(Freq_Relativa = n/sum(n) * 100) %>% 
   round(2) #0 NA
 
@@ -144,7 +144,7 @@ hogares <- individuos %>%
   right_join(hogares, by = c("CODUSU", "NRO_HOGAR")) %>% 
   ungroup()
 
-hogares %>% count(NBI4, wt = PONDIH) %>% 
+hogares %>% count(NBI4, wt = PONDERA) %>% 
   mutate(Freq_Relativa = n/sum(n) * 100) %>% 
   round(2) #0 NA
 
@@ -188,7 +188,7 @@ hogares <- individuos %>%
   right_join(hogares, by = c("CODUSU", "NRO_HOGAR")) %>%  
   ungroup()
 
-hogares %>% count(NBI5, wt = PONDIH) %>% 
+hogares %>% count(NBI5, wt = PONDERA) %>% 
   mutate(Freq_Relativa = n/sum(n) * 100) %>% 
   round(2)
 
@@ -205,7 +205,7 @@ hogares <- hogares %>%
 hogares <- hogares %>%
   mutate(Cantidad_de_NBI = NBI1 + NBI2 + NBI3 + NBI4 + NBI5)
 
-hogares %>% count(Cantidad_de_NBI, wt = PONDIH) %>% 
+hogares %>% count(Cantidad_de_NBI, wt = PONDERA) %>% 
   mutate(Freq_Relativa = n/sum(n) * 100) %>% 
   round(2)
 
@@ -228,12 +228,14 @@ hogares %>%
 #Grafico el ITF de los hogares
 ggplot(hogares, aes(x = ITF)) +
   geom_histogram(bins = 100) +
-  scale_x_continuous(labels = scales::comma,limits = c(0, 1000000))
+  scale_x_continuous(labels = scales::comma,limits = c(0, 1000000))+
+  ylab("Cantidad de Hogares")
 
 #Grafico el ITF de los hogares
 ggplot(hogares, aes(x = ITF/IX_TOT)) +
   geom_histogram(bins = 100) +
-  scale_x_continuous(labels = scales::comma,limits = c(0, 1000000))
+  scale_x_continuous(labels = scales::comma,limits = c(0, 1000000)) +
+  ylab("Cantidad de Hogares")
   
 
 #Elimino los ITF que son 0
@@ -431,17 +433,13 @@ jefes_hogares <- individuos %>%
   left_join(Cuadros, by = c("Primer_Nivel", "Segundo_Nivel", "Tercer_Nivel", "Cobertura_Medica", "AP", "Nivel_Educativo_Jefe", "Estado"))
 
 hogares %>% 
-  filter(is.na(Valor)) %>% 
-  count(Primer_Nivel, Segundo_Nivel, Tercer_Nivel, Estado) %>% 
-  arrange(desc(n))
-
-hogares %>% 
-  count(Valor)
-
-hogares %>%
-  filter(Primer_Nivel == "Empleado") %>% 
-  count(Segundo_Nivel, Tercer_Nivel)
-
-View(Cuadros %>% filter(Primer_Nivel == "Empleado", Segundo_Nivel == "Trabajdor", Tercer_Nivel== "Tecnico"))
-
-hogares %>% filter(is.na(Valor)) %>% count(Primer_Nivel, Segundo_Nivel, Tercer_Nivel) %>% arrange(desc(n))
+  count(Valor, wt = PONDERA.x) %>% 
+  mutate(Fre_Relativa = n / sum(n) * 100) %>%
+  rename(NSE = Valor) %>% 
+  round(2) %>% 
+  ggplot(aes(x = "", y = Fre_Relativa, fill = NSE)) +
+  geom_bar(stat = "identity") +
+  coord_polar(theta = "y") +
+  theme_void() +
+  theme(legend.position = "right")
+  
