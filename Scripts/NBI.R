@@ -85,7 +85,9 @@ hogares <- hogares %>%
   select(-(pers_x_habitacion)) #Elimino la variable temporal.
 
 
-count(hogares, NBI1)
+hogares %>% count(NBI1, wt = PONDIH) %>% 
+  mutate(Freq_Relativa = n/sum(n) * 100) %>% 
+  round(2)
 
 
 # #NBI 2 Tipo de vivienda --------------------------------------------------
@@ -105,7 +107,9 @@ hogares <- hogares %>%
     NBI2 = ifelse(IV3 == 3 | IV6 != 1, TRUE, FALSE)
   ) 
 
-count(hogares, NBI2) #25 NA
+hogares %>% count(NBI2, wt = PONDIH) %>% 
+  mutate(Freq_Relativa = n/sum(n) * 100) %>% 
+  round(2) #25 NA
 
 #NBI 3 Condiciones sanitarias. -------------------------------------------
 
@@ -117,7 +121,9 @@ hogares <- hogares %>%
   mutate(IV10 = ifelse(IV10 == 0, NA, IV10)) %>% 
   mutate(NBI3 = ifelse (IV8 ==2 | IV10 == 3, TRUE, FALSE)) 
 
-count(hogares, NBI3) #0 NA
+hogares %>% count(NBI3, wt = PONDIH) %>% 
+  mutate(Freq_Relativa = n/sum(n) * 100) %>% 
+  round(2) #0 NA
 
 
 # #NBI 4 Asistencia escolar ------------------------------------------------
@@ -138,8 +144,9 @@ hogares <- individuos %>%
   right_join(hogares, by = c("CODUSU", "NRO_HOGAR")) %>% 
   ungroup()
 
-summary(hogares$NBI4)
-
+hogares %>% count(NBI4, wt = PONDIH) %>% 
+  mutate(Freq_Relativa = n/sum(n) * 100) %>% 
+  round(2) #0 NA
 
 # #NBI 5 Subsitencia del hogar --------------------------------------------
 
@@ -150,7 +157,7 @@ summary(hogares$NBI4)
 individuos <- individuos %>%
   mutate(ESTADO = ifelse(ESTADO == 0, NA, ESTADO))%>% 
   mutate(OCUPADO = ifelse(ESTADO == 1, TRUE, FALSE)) %>% 
-  mutate(OCUPADO = ifelse(ESTADO ==3 & (CAT_INAC == 1 | CAT_INAC == 2), TRUE, OCUPADO)) 
+  mutate(OCUPADO = ifelse(ESTADO == 3 & (CAT_INAC == 1 | CAT_INAC == 2), TRUE, OCUPADO)) 
 
 count(individuos, ESTADO)
 count(individuos, CH10)
@@ -159,7 +166,7 @@ count(individuos, CH14)
 
 #Recodificacion de variables para nivel educativo del jefe
 #Si CH10 es 0 o 9 lo seteo como NA.
-#SiCH12 es 0 o 99 lo seteo como NA
+#Si CH12 es 0 o 99 lo seteo como NA
 #Si CH14 es 99 lo seteo como NA
 individuos <- individuos %>%
   mutate(CH10 = ifelse(CH10 %in% c(0, 9), NA, CH10)) %>% 
@@ -181,7 +188,9 @@ hogares <- individuos %>%
   right_join(hogares, by = c("CODUSU", "NRO_HOGAR")) %>%  
   ungroup()
 
-count(hogares, NBI5)
+hogares %>% count(NBI5, wt = PONDIH) %>% 
+  mutate(Freq_Relativa = n/sum(n) * 100) %>% 
+  round(2)
 
 # Resumen NBI -------------------------------------------------------------
 
@@ -196,7 +205,9 @@ hogares <- hogares %>%
 hogares <- hogares %>%
   mutate(Cantidad_de_NBI = NBI1 + NBI2 + NBI3 + NBI4 + NBI5)
 
-count(hogares, Cantidad_de_NBI)
+hogares %>% count(Cantidad_de_NBI, wt = PONDIH) %>% 
+  mutate(Freq_Relativa = n/sum(n) * 100) %>% 
+  round(2)
 
 #Tabla de contingencia de los NBI.
 tabla_combi_NBI <- hogares %>%
@@ -387,7 +398,7 @@ jefes_hogares <- individuos %>%
     Tercer_Nivel = case_when(
       Primer_Nivel == "Cuenta Propia" & PP3E_TOT >= 35 ~ "Ocupado",
       Primer_Nivel == "Cuenta Propia" & PP3E_TOT < 35 ~ "Subocupado",
-      Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 1, 5) ~ "Hasta 5 personas",
+      Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 1, 5) ~ "Hasta 5 pers.",
       Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 6, 8) ~ "6-40 pers.",
       Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 9, 10) ~ "41-200.",
       Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 11, 12) ~ ">200.",
@@ -433,3 +444,4 @@ hogares %>%
 
 View(Cuadros %>% filter(Primer_Nivel == "Empleado", Segundo_Nivel == "Trabajdor", Tercer_Nivel== "Tecnico"))
 
+hogares %>% filter(is.na(Valor)) %>% count(Primer_Nivel, Segundo_Nivel, Tercer_Nivel) %>% arrange(desc(n))
