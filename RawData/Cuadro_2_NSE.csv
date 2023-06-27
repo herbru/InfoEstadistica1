@@ -1,0 +1,12 @@
+1er Nivel;2do Nivel;3er Nivel;CMed;AP1/NE4;AP2/NE4;AP3/NE4;AP1/NE3;AP2/NE3;AP3/NE3;AP1/NE2;AP2/NE2;AP3/NE2;AP1/NE1;AP2/NE1;AP3/NE1;Estado
+Cuenta Propia;Profesional;;;5;5;6;4;5;5;4;4;5;4;4;5;Desocupado
+Cuenta Propia;Tecnico;;;4;4;5;3;4;4;3;3;4;2;3;3;Desocupado
+Cuenta Propia;Operativo;;;3;3;4;2;3;3;2;2;3;1;2;2;Desocupado
+Cuenta Propia;No calificada;;;2;2;3;1;2;2;1;2;2;1;1;2;Desocupado
+Empleado;Directivo;;;5;5;6;4;5;5;4;4;5;4;4;5;Desocupado
+Empleado;Jefe;;;3;4;4;3;3;4;2;3;3;2;3;3;Desocupado
+Empleado;Trabajador;;;2;3;3;2;2;3;1;2;2;1;1;2;Desocupado
+Empleador;;;;5;5;6;4;5;5;4;4;5;4;4;5;Desocupado
+;;;;4;5;5;3;4;4;2;3;3;1;2;2;Jubilado
+;;;TRUE;6;6;7;6;6;7;5;5;6;4;4;5;Rentista
+;;;FALSE;5;5;6;5;5;6;4;4;5;3;3;4;Rentista

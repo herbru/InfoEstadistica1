@@ -1,0 +1,41 @@
+1er Nivel;2do Nivel;3er Nivel;CMed;AP1/NE4;AP2/NE4;AP3/NE4;AP1/NE3;AP2/NE3;AP3/NE3;AP1/NE2;AP2/NE2;AP3/NE2;AP1/NE1;AP2/NE1;AP3/NE1
+Cuenta Propia;Profesional;Ocupado;CM si;6;6;7;5;6;6;5;5;6;4;5;5
+Cuenta Propia;Profesional;Ocupado;CM no;5;6;6;5;5;6;4;5;5;4;5;5
+Cuenta Propia;Profesional;Subocupado;CM si;5;5;6;4;5;5;4;5;5;4;4;5
+Cuenta Propia;Profesional;Subocupado;CM no;5;5;6;4;5;5;4;4;5;3;4;4
+Cuenta Propia;Tecnico;Ocupado;CM si;5;5;6;4;5;5;4;5;5;4;4;5
+Cuenta Propia;Tecnico;Ocupado;CM no;5;5;6;4;5;5;4;4;5;3;4;4
+Cuenta Propia;Tecnico;Subocupado;CM si;4;5;5;4;4;5;3;4;4;3;3;4
+Cuenta Propia;Tecnico;Subocupado;CM no;4;4;5;3;4;4;3;3;4;3;3;4
+Cuenta Propia;Operativo;Ocupado;CM si;4;4;5;3;4;4;3;3;4;2;3;3
+Cuenta Propia;Operativo;Ocupado;CM no;3;4;4;3;3;4;2;3;3;2;2;3
+Cuenta Propia;Operativo;Subocupado;CM si;3;3;4;2;3;3;2;2;3;2;2;3
+Cuenta Propia;Operativo;Subocupado;CM no;2;3;3;2;2;3;2;2;3;1;2;2
+Cuenta Propia;No calificada;Ocupado;CM si;3;4;4;3;3;4;2;3;3;2;3;3
+Cuenta Propia;No calificada;Ocupado;CM no;3;3;4;2;3;3;2;3;3;2;2;3
+Cuenta Propia;No calificada;Subocupado;CM si;3;3;4;2;3;3;2;2;3;1;2;2
+Cuenta Propia;No calificada;Subocupado;CM no;2;3;3;2;2;3;1;2;2;1;1;2
+Empleado;Directivo;Hasta 5 pers.;NA;5;6;6;5;5;6;4;5;5;4;4;5
+Empleado;Directivo;6-40 pers.;NA;5;6;6;5;5;6;4;5;5;4;5;5
+Empleado;Directivo;41-200 pers.;NA;6;6;7;5;6;6;5;5;6;4;5;5
+Empleado;Directivo;> 200 pers.;NA;6;6;7;5;6;6;5;5;6;4;5;5
+Empleado;Jefe;Hasta 5 pers.;CM si;4;5;5;4;4;5;3;4;4;3;3;4
+Empleado;Jefe;Hasta 5 pers.;CM no;4;4;5;3;4;4;3;3;4;3;3;4
+Empleado;Jefe;6-40 pers.;CM si;5;5;6;4;5;5;4;4;5;3;4;4
+Empleado;Jefe;6-40 pers.;CM no;4;5;5;4;4;5;3;4;4;3;3;4
+Empleado;Jefe;41-200 pers.;CM si;5;5;6;4;5;5;4;5;5;4;4;5
+Empleado;Jefe;41-200 pers.;CM no;5;5;6;4;5;5;4;4;5;3;4;4
+Empleado;Jefe;> 200 pers.;CM si;5;6;6;5;5;6;4;5;5;4;4;5
+Empleado;Jefe;> 200 pers.;CM no;5;5;6;4;5;5;4;4;5;3;4;4
+Empleado;Trabajador;Profesional;CM si;5;5;6;4;5;5;4;5;5;4;4;5
+Empleado;Trabajador;Profesional;CM no;5;5;6;4;5;5;4;4;5;3;4;4
+Empleado;Trabajador;Tecnico;CM si;4;5;5;4;4;5;3;4;4;3;3;4
+Empleado;Trabajador;Tecnico;CM no;4;4;5;3;4;4;3;3;4;3;3;4
+Empleado;Trabajador;Operativo;CM si;4;4;5;3;4;4;3;4;4;3;3;4
+Empleado;Trabajador;Operativo;CM no;4;4;5;3;4;4;3;3;4;2;3;3
+Empleado;Trabajador;No calificada;CM si;3;3;4;2;3;3;2;3;3;2;2;3
+Empleado;Trabajador;No calificada;CM no;3;3;4;2;3;3;2;2;3;1;2;2
+Empleador;NA;Hasta 5 pers.;NA;5;6;6;5;5;6;4;5;5;4;4;5
+Empleador;NA;6-40 pers.;NA;6;6;7;5;6;6;5;5;6;4;5;5
+Empleador;NA;41-200 pers.;NA;6;6;7;5;6;6;5;5;6;4;5;5
+Empleador;NA;> 200 pers.;NA;6;6;7;5;6;6;5;5;6;5;5;6

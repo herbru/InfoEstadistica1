@@ -11,8 +11,8 @@ individuos <- read_csv2("RawData/usu_individual_T322.txt",
                         )
                        ) #Uso csv2 porque el separador por default es ";" y el separador de los decimales es ",".
 hogares <-  read_csv2("RawData/usu_hogar_T322.txt")
-individuos
-hogares
+head(individuos)
+head(hogares)
 
 #Etiquetado de variables.
 var_label(hogares$II1)    <- "Cantidad de habitaciones de uso excusivo del hogar"
@@ -74,14 +74,16 @@ count(hogares, IX_TOT) #Los valores de IX_TOT parecen razonables.
 
 count(hogares, II1) #El valor 99 y el 0 es llamativo.
 hogares <- hogares %>%
-  mutate(II1 = ifelse(II1 == 99, NA, II1)) #Si la Cant. de habitaciones del hogar es 99 se lo considera Ns/Nc
+  mutate(II1 = ifelse(II1 == 99, NA, II1)) #Si la Cant. de habitaciones del hogar es 99 se lo considera NA. Hay 12 NA
 
 hogares <- hogares %>%
-  mutate (pers_x_habitacion = IX_TOT/II1, 
-          NBI1 = ifelse(pers_x_habitacion <= 3, FALSE, TRUE), 
-          NBI1 = ifelse(NRO_HOGAR %in% c(51,61), TRUE, NBI1))%>%
+  mutate(
+    pers_x_habitacion = IX_TOT/II1, 
+    NBI1 = ifelse(pers_x_habitacion <= 3, FALSE, TRUE), 
+    NBI1 = ifelse(NRO_HOGAR %in% c(51,61), TRUE, NBI1)
+  ) %>%
   select(-(pers_x_habitacion)) #Elimino la variable temporal.
-  
+
 
 count(hogares, NBI1)
 
@@ -95,13 +97,15 @@ hogares %>%
     labs(x = "Tiene agua por...", y = "Material de los pisos") +
     theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 
-#Si IV3 = 4 lo seteo como NA, ya que 4 no es uno de los valores en le diseño de registro. 
+#Si IV3 = 4 lo seteo como NA, ya que 4 no es uno de los valores en el diseño de registro. 
 #Ademas creo el NBI2 cuando el piso es de tierra o no tienen agua por cañeria dentro de la vivienda.
 hogares <- hogares %>%
-  mutate(IV3 = ifelse(IV3 == 4, NA, IV3), 
-         NBI2 = ifelse(IV3 == 3 | IV6 != 1, TRUE, FALSE)) 
+  mutate(
+    IV3 = ifelse(IV3 == 4, NA, IV3), 
+    NBI2 = ifelse(IV3 == 3 | IV6 != 1, TRUE, FALSE)
+  ) 
 
-count(hogares, NBI2)
+count(hogares, NBI2) #25 NA
 
 #NBI 3 Condiciones sanitarias. -------------------------------------------
 
@@ -113,7 +117,7 @@ hogares <- hogares %>%
   mutate(IV10 = ifelse(IV10 == 0, NA, IV10)) %>% 
   mutate(NBI3 = ifelse (IV8 ==2 | IV10 == 3, TRUE, FALSE)) 
 
-count(hogares, NBI3)
+count(hogares, NBI3) #0 NA
 
 
 # #NBI 4 Asistencia escolar ------------------------------------------------
@@ -131,7 +135,8 @@ hogares <- individuos %>%
   group_by(CODUSU, NRO_HOGAR)%>% 
   summarise(NBI4 = ifelse(sum(NBI4_ind) != 0, TRUE, FALSE)) %>% 
   select(CODUSU, NRO_HOGAR, NBI4) %>%
-  right_join(hogares, by = c("CODUSU", "NRO_HOGAR"))
+  right_join(hogares, by = c("CODUSU", "NRO_HOGAR")) %>% 
+  ungroup()
 
 summary(hogares$NBI4)
 
@@ -161,14 +166,14 @@ individuos <- individuos %>%
   mutate(CH12 = ifelse(CH12 %in% c(0, 99), NA, CH12)) %>%
   mutate(CH14 = ifelse(CH14 == 99, NA, CH14)) 
 
-#Si el jefe del hogar nunca asistio a asiste a la escuela pero no completo 3er grado entonces tiene un nivel educativo bajo
+#Si el jefe del hogar nunca asistio o asistio a la escuela pero no completo 3er grado entonces tiene un nivel educativo bajo
 #Se agrupa por CODUSU y NRO_HOGAR
 #Se crea una nueva columna para mas de 4 personas por ocupado.
 #Si el nivel educativo del jefe es bajo y hay mas de 4 personas por ocupado el NBI5 es Insatisfecho.
 #Se seleccionan solo las columnas que me sirven
 #Agrego la columna NBI5 al df hogares.
 hogares <- individuos %>%
-  mutate(Niv_Educativo_Jefe_Bajo = ifelse(CH03 == 1 & (CH10 == 3 | (CH12<=2 & CH14<=2)), TRUE, FALSE))%>% 
+  mutate(Niv_Educativo_Jefe_Bajo = ifelse(CH03 == 1 & (CH10 == 3 | (CH12 <= 2 & CH14 <= 2)), TRUE, FALSE))%>% 
   group_by(CODUSU, NRO_HOGAR) %>%
   mutate(Mas_de_4_Personas_x_Ocupado = ifelse(n()/sum(OCUPADO) >= 4, TRUE, FALSE)) %>% 
   summarise(NBI5 = ifelse(sum(Mas_de_4_Personas_x_Ocupado) != 0 & sum(Niv_Educativo_Jefe_Bajo) != 0, TRUE, FALSE))%>% 
@@ -178,7 +183,6 @@ hogares <- individuos %>%
 
 count(hogares, NBI5)
 
-
 # Resumen NBI -------------------------------------------------------------
 
 hogares <- hogares %>% 
@@ -187,38 +191,39 @@ hogares <- hogares %>%
          Tipo_NBI = ifelse(NBI_Vivienda, "Vivenda", ifelse(NBI_Insercion, "Insercion", "Ninguna")),
          Tipo_NBI = parse_factor(Tipo_NBI)
   ) 
-# summary(hogares)
 
 #Creo la variable cuantos NBI tiene el hogar.
 hogares <- hogares %>%
   mutate(Cantidad_de_NBI = NBI1 + NBI2 + NBI3 + NBI4 + NBI5)
 
-# count(hogares, Cantidad_de_NBI)
-# 
-# #Tabla de contingencia de los NBI.
-# tabla_combi_NBI <- hogares %>%
-#   count(NBI1,NBI2,NBI3,NBI4,NBI5) %>% 
-#   drop_na() %>%
-#   arrange(desc(n))
-# 
-# View(tabla_combi_NBI)
-# 
-# #Ponderacion de la poblacion por la variable PONDERA.
-# count(hogares, AGLOMERADO)
-# 
-# #Distribucion de la variable PONDERA
-# hogares %>%
-#   ggplot(aes(AGLOMERADO, PONDERA))+
-#     geom_point(gmail.com)
-# 
-# summary(hogares, PONDERA)
+count(hogares, Cantidad_de_NBI)
 
+#Tabla de contingencia de los NBI.
+tabla_combi_NBI <- hogares %>%
+  count(NBI1,NBI2,NBI3,NBI4,NBI5) %>%
+  drop_na() %>%
+  arrange(desc(n))
+
+tabla_combi_NBI
+
+#Tabla de frecuencias absolutas de hogares que tienen al menos 1 NBI agrupados por aglomerado
+hogares %>% 
+  mutate(Tiene_NBI = ifelse(NBI1 + NBI2+ NBI3 + NBI4 + NBI5 == 0, 0, 1)) %>% 
+  count(Tiene_NBI, AGLOMERADO, wt = PONDERA) %>% 
+  filter(Tiene_NBI == 1)
 
 # LP - LI -----------------------------------------------------------------
 
 #Grafico el ITF de los hogares
 ggplot(hogares, aes(x = ITF)) +
-  geom_histogram(bins = 100)
+  geom_histogram(bins = 100) +
+  scale_x_continuous(labels = scales::comma,limits = c(0, 1000000))
+
+#Grafico el ITF de los hogares
+ggplot(hogares, aes(x = ITF/IX_TOT)) +
+  geom_histogram(bins = 100) +
+  scale_x_continuous(labels = scales::comma,limits = c(0, 1000000))
+  
 
 #Elimino los ITF que son 0
 hogares <- hogares %>% 
@@ -268,25 +273,163 @@ hogares <- hogares %>%
   rename(CBA = Promedio.x, CBT = Promedio.y)
   
 hogares <- hogares %>%   
-  mutate(LI = CBA * Equivalencia_Adultos,
-         LP = CBT * Equivalencia_Adultos
+  mutate(
+    LI = CBA * Equivalencia_Adultos,
+    LP = CBT * Equivalencia_Adultos
   ) %>%
-  mutate(Pobre     = ifelse(ITF < LP, TRUE, FALSE),
-         Indigente = ifelse(ITF < LI, TRUE, FALSE)
+  mutate(
+    Pobre     = ifelse(ITF < LP, TRUE, FALSE),
+    Indigente = ifelse(ITF < LI, TRUE, FALSE)
   ) %>%
   mutate(
     Tipo_Pobreza = ifelse(Indigente, "Indigente", ifelse(Pobre, "Pobre", "No Pobre")),
     Tipo_Pobreza = parse_factor(Tipo_Pobreza)
   )
 
-#Pondero a los hogares por ingreso
+#Tabla de frecuencia relativa de pobreza por individuo
 hogares %>%
   ungroup() %>% 
-  count(Tipo_Pobreza, wt = PONDIH) %>% 
+  count(Tipo_Pobreza, wt = PONDIH * IX_TOT) %>%
+  mutate(freq_relativa = (n/sum(n))*100)
+
+#Tabla de frecuencia relativa de pobreza por hogar
+hogares %>%
+  ungroup() %>% 
+  count(Tipo_Pobreza, wt = PONDIH) %>%
   mutate(freq_relativa = (n/sum(n))*100)
   
 #Genero tabla de contingecia sobre el tipo de pobreza y el tipo de NBI
-table(hogares$Tipo_Pobreza, hogares$Tipo_NBI)
+tabla_contingencia <- table(hogares$Tipo_Pobreza, hogares$Tipo_NBI)
+tabla_contingencia <- tabla_contingencia[,-3]
+prop_cont_tabla <- round(prop.table(tabla_contingencia) * 100, 2)
 
-   
+prop_cont_tabla
+
+# NSE ---------------------------------------------------------------------
+Cuadro_1 <- read_csv2("RawData/Cuadro_1_NSE.csv")
+Cuadro_2 <- read_csv2("RawData/Cuadro_2_NSE.csv")
+Nombres_NSE <- read_csv2("RawData/Nombres_NSE.csv")
+
+Cuadro_1 <- Cuadro_1 %>%
+  mutate(CMed = ifelse(CMed == "CM si", as.logical(TRUE), as.logical(FALSE))) %>%
+  pivot_longer(cols = contains("/"), names_to = c("AP", "NE"), names_sep = "/", values_to = "Valor") %>% 
+  rename(
+    Primer_Nivel         = `1er Nivel`, 
+    Segundo_Nivel        = `2do Nivel`, 
+    Tercer_Nivel         = `3er Nivel`,
+    Nivel_Educativo_Jefe = NE,
+    Cobertura_Medica     = CMed) %>% 
+  mutate(
+    Nivel_Educativo_Jefe = case_when(
+      Nivel_Educativo_Jefe == "NE1" ~ as.double(1),
+      Nivel_Educativo_Jefe == "NE2" ~ as.double(2),
+      Nivel_Educativo_Jefe == "NE3" ~ as.double(3),
+      Nivel_Educativo_Jefe == "NE4" ~ as.double(4)
+    ),
+    Segundo_Nivel = ifelse(Primer_Nivel == "Empleador", NA, Segundo_Nivel),
+    Estado = "Ocupado"
+  )
+
+Cuadro_2 <- Cuadro_2 %>% 
+  pivot_longer(cols = contains("/"), names_to = c("AP", "NE"), names_sep = "/", values_to = "Valor") %>% 
+  rename(
+    Primer_Nivel         = `1er Nivel`, 
+    Segundo_Nivel        = `2do Nivel`, 
+    Tercer_Nivel         = `3er Nivel`,
+    Nivel_Educativo_Jefe = NE,
+    Cobertura_Medica     = CMed) %>% 
+  mutate(
+    Nivel_Educativo_Jefe = case_when(
+      Nivel_Educativo_Jefe == "NE1" ~ as.double(1),
+      Nivel_Educativo_Jefe == "NE2" ~ as.double(2),
+      Nivel_Educativo_Jefe == "NE3" ~ as.double(3),
+      Nivel_Educativo_Jefe == "NE4" ~ as.double(4)
+    )
+  )
+
+Cuadros <- bind_rows(Cuadro_1, Cuadro_2)
   
+# Calculo la cantidad de aportantes para cada hogar
+individuos <- individuos %>%
+  mutate(Aporta = ifelse(P47T > 0, TRUE, FALSE)) %>% 
+  group_by(CODUSU, NRO_HOGAR)
+
+View(individuos %>% count(ESTADO, CAT_OCUP, CAT_INAC))
+#Los inactivos y menores de 10 años tienen CAT_OCUP = 0
+
+#Calculo las otras variables para el jefe del hogar
+#Los estudiantes y las amas de casa los tomo como jubilados
+#33NA porque tienen CAT_OCUP = 0 que no esta entre las opciones
+jefes_hogares <- individuos %>%
+  filter(P47T == max(P47T)) %>%
+  mutate(
+    Cantidad_Aportantes = sum(Aporta, na.rm = FALSE),
+    Estado = case_when(
+      ESTADO   == 1 ~ "Ocupado",
+      ESTADO   == 2 ~ "Desocupado",
+      CAT_INAC == 1 ~ "Jubilado",
+      ESTADO == 3 &  CAT_INAC %in% c(3, 4)  ~ "Jubilado",
+    ),
+    Primer_Nivel  = case_when(
+      CAT_OCUP == 3 ~ "Empleado",
+      CAT_OCUP == 2 ~ "Cuenta Propia",
+      CAT_OCUP == 1 ~ "Empleador"
+    ),
+    Segundo_Nivel = case_when(
+      substr(as.character(PP04D_COD), 5, 5) == 1 & substr(as.character(PP04D_COD), 3, 3) == 1 ~ "Profesional",
+      substr(as.character(PP04D_COD), 5, 5) == 2 & substr(as.character(PP04D_COD), 3, 3) == 1 ~ "Tecnico",
+      substr(as.character(PP04D_COD), 5, 5) == 3 & substr(as.character(PP04D_COD), 3, 3) == 1 ~ "Operativo",
+      substr(as.character(PP04D_COD), 5, 5) == 4 & substr(as.character(PP04D_COD), 3, 3) == 1 ~ "No calificada",
+      substr(as.character(PP04D_COD), 3, 3) == 0 & Primer_Nivel == "Empleado" ~ "Directivo",
+      substr(as.character(PP04D_COD), 3, 3) == 2 & Primer_Nivel == "Empleado" ~ "Jefe",
+      substr(as.character(PP04D_COD), 3, 3) == 3 & Primer_Nivel == "Empleado" ~ "Trabajador",
+    ),
+    Tercer_Nivel = case_when(
+      Primer_Nivel == "Cuenta Propia" & PP3E_TOT >= 35 ~ "Ocupado",
+      Primer_Nivel == "Cuenta Propia" & PP3E_TOT < 35 ~ "Subocupado",
+      Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 1, 5) ~ "Hasta 5 personas",
+      Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 6, 8) ~ "6-40 pers.",
+      Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 9, 10) ~ "41-200.",
+      Primer_Nivel == "Empleado" & Segundo_Nivel %in% c("Directivo", "Jefe") & between(PP04C, 11, 12) ~ ">200.",
+      Primer_Nivel == "Empleado" & Segundo_Nivel == "Trabajador" & substr(as.character(PP04D_COD), 5, 5) == "1" & substr(as.character(PP04D_COD), 3, 3) %in% c("1", "3") ~ "Profesional",
+      Primer_Nivel == "Empleado" & Segundo_Nivel == "Trabajador" & substr(as.character(PP04D_COD), 5, 5) == "2" & substr(as.character(PP04D_COD), 3, 3) %in% c("1", "3") ~ "Tecnico",
+      Primer_Nivel == "Empleado" & Segundo_Nivel == "Trabajador" & substr(as.character(PP04D_COD), 5, 5) == "3" & substr(as.character(PP04D_COD), 3, 3) %in% c("1", "3") ~ "Operativo",
+      Primer_Nivel == "Empleado" & Segundo_Nivel == "Trabajador" & substr(as.character(PP04D_COD), 5, 5) == "4" & substr(as.character(PP04D_COD), 3, 3) %in% c("1", "3") ~ "No calificada",
+      Primer_Nivel == "Empleador" & is.na(Segundo_Nivel) & between(PP04C, 1, 5) ~ "Hasta 5 pers.",
+      Primer_Nivel == "Empleador" & is.na(Segundo_Nivel) & between(PP04C, 6, 8) ~ "6-40 pers.",
+      Primer_Nivel == "Empleador" & is.na(Segundo_Nivel) & between(PP04C, 9, 10) ~ "41-200 pers.",
+      Primer_Nivel == "Empleador" & is.na(Segundo_Nivel) & between(PP04C, 11, 12) ~ "> 200 pers."
+    ),
+    Cobertura_Medica = ifelse(CH08 == 4, FALSE, ifelse(CH08 == 9, NA, TRUE)),
+    Cobertura_Medica = ifelse(Estado %in% c("Desocupado", "Empleador", "Jubilado", "Rentista") | Segundo_Nivel == "Directivo" | Primer_Nivel == "Empleador", NA, Cobertura_Medica),
+    Nivel_Educativo_Jefe = case_when(
+      NIVEL_ED %in% c(1,7) ~ 1,
+      NIVEL_ED %in% c(2,3) ~ 2,
+      NIVEL_ED %in% c(4,5) ~ 3,
+      NIVEL_ED == 6 ~ 4
+    )
+  )
+
+ hogares <- hogares %>%
+  ungroup() %>% 
+  left_join(jefes_hogares, by = c("CODUSU", "NRO_HOGAR")) %>%
+  mutate(
+    Proporcion_Aportantes = Cantidad_Aportantes / IX_TOT,
+    AP = ifelse(Proporcion_Aportantes <= 0.4, "AP1", ifelse(Proporcion_Aportantes < 0.7, "AP2", "AP3"))
+  ) %>%
+  left_join(Cuadros, by = c("Primer_Nivel", "Segundo_Nivel", "Tercer_Nivel", "Cobertura_Medica", "AP", "Nivel_Educativo_Jefe", "Estado"))
+
+hogares %>% 
+  filter(is.na(Valor)) %>% 
+  count(Primer_Nivel, Segundo_Nivel, Tercer_Nivel, Estado) %>% 
+  arrange(desc(n))
+
+hogares %>% 
+  count(Valor)
+
+hogares %>%
+  filter(Primer_Nivel == "Empleado") %>% 
+  count(Segundo_Nivel, Tercer_Nivel)
+
+View(Cuadros %>% filter(Primer_Nivel == "Empleado", Segundo_Nivel == "Trabajdor", Tercer_Nivel== "Tecnico"))
+
